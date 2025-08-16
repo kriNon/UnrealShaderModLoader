@@ -12,60 +12,61 @@ void USModLoader::applyModifications() {
         FString Path = FPaths::Combine(PluginShaderPath, *mod.filePath);
         FString FileContent;
         if (!FFileHelper::LoadFileToString(FileContent, *Path)) {
-        	UE_LOG(LogUnrealShaderModLoader, Error, TEXT("Failed to load file at path: %s"), *Path);
+            UE_LOG(LogUnrealShaderModLoader, Error, TEXT("Failed to load file at path: %s"), *Path);
+            continue; // Skip to next mod
         }
 
-        std::string code(TCHAR_TO_UTF8(*FileContent));  // Convert FString to std::string
-    	std::regex pattern = USMLStringLib::get_pattern(mod);
-    	
-        std::smatch match;
-        int matchCount = 0;
-    	
-    	//Check for match
-    	std::string searchCode = code; // Copy of the code for searching
-    	if(std::regex_search(searchCode, match, pattern))
-    	{
-    		matchCount++;
-    		searchCode = match.suffix().str(); // Continue searching the remainder
+        std::string code(TCHAR_TO_UTF8(*FileContent));
+        std::regex pattern = USMLStringLib::get_pattern(mod);
 
-    		// Preserve the original match by using a separate match_2 for the second search
-    		std::smatch match_2 = match; 
-    		if (std::regex_search(searchCode, match_2, pattern)) {
-    			matchCount++;
-    			break; // Exit if a second match is found
-    		}
-    	}
+        // --- Phase 1: Find all matches and store their details ---
+        // We use std::sregex_iterator to find all non-overlapping matches efficiently.
+        std::vector<std::smatch> matches;
+        auto matches_begin = std::sregex_iterator(code.begin(), code.end(), pattern);
+        auto matches_end = std::sregex_iterator();
 
-    	// Check match count
-    	if (matchCount != 1) {
-    		UE_LOG(LogUnrealShaderModLoader, Error, TEXT("Expected exactly one match, found %i"), matchCount);
-    		continue; // Skip to the next mod
-    	}
+        for (std::sregex_iterator i = matches_begin; i != matches_end; ++i) {
+            matches.push_back(*i);
+        }
 
-    	// Second Segment: Perform modifications using the stored first match details
-        // Perform the regex search and modification
-    	const ptrdiff_t matchStart = match.position(0);
-    	const ptrdiff_t matchLength = match.length(0);
-    	std::string matchedSegment = match.str(0);
-    	
-    	switch (mod.type)
-    	{
-    	case USModifications::modification_type::comment:
-    		{
-    			USModifications::Comment(code, matchedSegment, matchStart, matchLength);
-    			break;
-    		}
-    	case USModifications::modification_type::replace:
-    		{
-    			USModifications::Replace(code, mod.replacement, matchStart, matchLength);
-    			break;
-    		}
-    	case USModifications::modification_type::insert_after:
-    		{
-    			USModifications::InsertAfter(code, mod.replacement, matchStart, matchLength);
-    			break;
-    		}
-    	}
+        // --- Phase 2: Check match count, issue warnings or errors ---
+        if (matches.empty()) {
+            UE_LOG(LogUnrealShaderModLoader, Error, TEXT("Expected at least one match for mod on '%s', but found 0."), *mod.filePath);
+            continue; // Skip to the next mod
+        }
+
+        if (matches.size() > 1) {
+            UE_LOG(LogUnrealShaderModLoader, Warning, TEXT("Mod for '%s' found %d matches. The modification will be applied to ALL of them."), *mod.filePath, matches.size());
+        }
+
+        // --- Phase 3: Apply modifications in reverse order ---
+        // We iterate backwards through our stored matches. This is critical.
+        // By modifying the string from the end to the beginning, we don't invalidate
+        // the character positions of earlier matches.
+        for (auto it = matches.rbegin(); it != matches.rend(); ++it) {
+            const std::smatch& match = *it;
+            const ptrdiff_t matchStart = match.position(0);
+            const ptrdiff_t matchLength = match.length(0);
+            std::string matchedSegment = match.str(0);
+
+            switch (mod.type) {
+                case USModifications::modification_type::comment:
+                {
+                    USModifications::Comment(code, matchedSegment, matchStart, matchLength);
+                    break;
+                }
+                case USModifications::modification_type::replace:
+                {
+                    USModifications::Replace(code, mod.replacement, matchStart, matchLength);
+                    break;
+                }
+                case USModifications::modification_type::insert_after:
+                {
+                    USModifications::InsertAfter(code, mod.replacement, matchStart, matchLength);
+                    break;
+                }
+            }
+        }
 
         // Convert the modified std::string back to FString before saving
         FString ModifiedFileContent = UTF8_TO_TCHAR(code.c_str());
@@ -77,8 +78,8 @@ void USModLoader::applyModifications() {
         }
     }
 
-	//Cleanup
-	storage_module->mods.Empty();
+    // Cleanup
+    storage_module->mods.Empty();
 }
 
 void USModLoader::PrepareShaderDirectories()
