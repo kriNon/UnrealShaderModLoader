@@ -51,20 +51,25 @@ void USModLoader::applyModifications() {
 
             switch (mod.type) {
                 case USModifications::modification_type::comment:
-                {
-                    USModifications::Comment(code, matchedSegment, matchStart, matchLength);
-                    break;
-                }
+                    {
+                        USModifications::Comment(code, matchedSegment, matchStart, matchLength);
+                        break;
+                    }
                 case USModifications::modification_type::replace:
-                {
-                    USModifications::Replace(code, mod.replacement, matchStart, matchLength);
-                    break;
-                }
+                    {
+                        USModifications::Replace(code, mod.replacement, matchStart, matchLength);
+                        break;
+                    }
                 case USModifications::modification_type::insert_after:
-                {
-                    USModifications::InsertAfter(code, mod.replacement, matchStart, matchLength);
-                    break;
-                }
+                    {
+                        USModifications::InsertAfter(code, mod.replacement, matchStart, matchLength);
+                        break;
+                    }
+                case USModifications::modification_type::insert_before:
+                    {
+                        USModifications::InsertBefore(code, mod.replacement, matchStart, matchLength);
+                        break;
+                    }
             }
         }
 

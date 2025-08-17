@@ -11,7 +11,8 @@ namespace USModifications
 	{
 		comment,
 		replace,
-		insert_after
+		insert_after,
+		insert_before
 	};
 
 	struct modification {
@@ -64,6 +65,14 @@ namespace UnrealShaderModLoader
 				IModuleInterface* Module = FModuleManager::Get().GetModule("ModLoaderStorage");
 				FModLoaderStorageModule* storage_module = static_cast<FModLoaderStorageModule*>(Module);
 				storage_module->mods.Add(USModifications::modification{filePath, USModifications::modification_type::insert_after,pattern, replacement, !regex_pattern});
+		#endif
+	}
+	static void AddModification_InsertBefore(FString filePath, std::string pattern, FString replacement, bool regex_pattern = false)
+	{
+		#if WITH_EDITOR
+				IModuleInterface* Module = FModuleManager::Get().GetModule("ModLoaderStorage");
+				FModLoaderStorageModule* storage_module = static_cast<FModLoaderStorageModule*>(Module);
+				storage_module->mods.Add(USModifications::modification{filePath, USModifications::modification_type::insert_before,pattern, replacement, !regex_pattern});
 		#endif
 	}
 }

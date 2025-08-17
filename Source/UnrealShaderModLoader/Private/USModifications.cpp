@@ -20,26 +20,56 @@ void USModifications::Replace(std::string& code, const FString& replacement, con
 
 void USModifications::InsertAfter(std::string& code, const FString& replacement, const ptrdiff_t matchStart, const ptrdiff_t matchLength)
 {
-	ptrdiff_t insertPosition = matchStart + matchLength; // Position right after the matched text
+	// 1. Prepare the replacement text, ensuring it ends with a newline.
+	std::string textToInsert = TCHAR_TO_UTF8(*replacement);
+	if (textToInsert.empty() || textToInsert.back() != '\n')
+	{
+		textToInsert += '\n';
+	}
 
-	// Find the position of the next newline character after the match
-	const size_t endOfLinePos = code.find('\n', insertPosition);
-	if (endOfLinePos != std::string::npos) {
-		// If a newline is found, adjust the insertPosition to be after the newline
-		insertPosition = endOfLinePos + 1;
-	} else {
-		// If no newline is found, this means we're at the last line or the file doesn't end with a newline
-		// You might want to add a newline to the end before inserting
+	// 2. Find the end of the line that contains the match.
+	const size_t endOfMatch = matchStart + matchLength;
+	const size_t endOfLinePos = code.find('\n', endOfMatch);
+
+	// 3. Insert the text.
+	if (endOfLinePos != std::string::npos)
+	{
+		// A newline was found after the match, so we insert the text on the next line.
+		code.insert(endOfLinePos + 1, textToInsert);
+	}
+	else
+	{
+		// No newline found; the match is on the last line of the string.
+		// Append a newline followed by the replacement text.
 		code += '\n';
-		insertPosition = code.length();
+		code += textToInsert;
+	}
+}
+
+void USModifications::InsertBefore(std::string& code, const FString& replacement, const ptrdiff_t matchStart, const ptrdiff_t matchLength)
+{
+	// 1. Prepare the replacement text, ensuring it ends with a newline.
+	std::string textToInsert = TCHAR_TO_UTF8(*replacement);
+	if (textToInsert.empty() || textToInsert.back() != '\n')
+	{
+		textToInsert += '\n';
 	}
 
-	// Check if mod.replacement ends with a newline character, and if not, add one
-	std::string replacementText = TCHAR_TO_UTF8(*replacement);
-	if (!replacementText.empty() && replacementText.back() != '\n') {
-		replacementText += '\n';
+	// 2. Find the beginning of the line that contains the match
+	// by searching backwards from the match's start for a newline.
+	const size_t prevNewlinePos = code.rfind('\n', matchStart);
+	
+	// 3. Insert the text.
+	if (prevNewlinePos != std::string::npos)
+	{
+		// A previous newline was found. Insert the text right after it,
+		// placing it on its own line just before the matched line.
+		code.insert(prevNewlinePos + 1, textToInsert);
 	}
-
-	// Insert the modified replacement text at the calculated position
-	code.insert(insertPosition, replacementText);
+	else
+	{
+		// No previous newline; the match is on the very first line.
+		// Insert the text at the beginning of the entire string.
+		code.insert(0, textToInsert);
+	}
 }
