@@ -43,36 +43,36 @@ public:
 
 namespace UnrealShaderModLoader
 {
-	static void AddModification_Comment(FString filePath, std::string pattern, bool regex_pattern = false)
+	static void AddModification_Comment(FString filePath, FString pattern, bool regex_pattern = false)
 	{
 		#if WITH_EDITOR
 				IModuleInterface* Module = FModuleManager::Get().GetModule("ModLoaderStorage");
 				FModLoaderStorageModule* storage_module = static_cast<FModLoaderStorageModule*>(Module);
-				storage_module->mods.Add(USModifications::modification{filePath, USModifications::modification_type::comment,pattern, "", !regex_pattern});
+				storage_module->mods.Add(USModifications::modification{filePath, USModifications::modification_type::comment,std::string(TCHAR_TO_UTF8(*pattern)), "", !regex_pattern});
 		#endif
 	}
-	static void AddModification_Replace(FString filePath, std::string pattern, FString replacement, bool regex_pattern = false)
+	static void AddModification_Replace(FString filePath, FString pattern, FString replacement, bool regex_pattern = false)
 	{
 		#if WITH_EDITOR
 				IModuleInterface* Module = FModuleManager::Get().GetModule("ModLoaderStorage");
 				FModLoaderStorageModule* storage_module = static_cast<FModLoaderStorageModule*>(Module);
-				storage_module->mods.Add(USModifications::modification{filePath, USModifications::modification_type::replace,pattern, replacement, !regex_pattern});
+				storage_module->mods.Add(USModifications::modification{filePath, USModifications::modification_type::replace,std::string(TCHAR_TO_UTF8(*pattern)), replacement, !regex_pattern});
 		#endif
 	}
-	static void AddModification_InsertAfter(FString filePath, std::string pattern, FString replacement, bool regex_pattern = false)
+	static void AddModification_InsertAfter(FString filePath, FString pattern, FString replacement, bool regex_pattern = false)
 	{
 		#if WITH_EDITOR
 				IModuleInterface* Module = FModuleManager::Get().GetModule("ModLoaderStorage");
 				FModLoaderStorageModule* storage_module = static_cast<FModLoaderStorageModule*>(Module);
-				storage_module->mods.Add(USModifications::modification{filePath, USModifications::modification_type::insert_after,pattern, replacement, !regex_pattern});
+				storage_module->mods.Add(USModifications::modification{filePath, USModifications::modification_type::insert_after,std::string(TCHAR_TO_UTF8(*pattern)), replacement, !regex_pattern});
 		#endif
 	}
-	static void AddModification_InsertBefore(FString filePath, std::string pattern, FString replacement, bool regex_pattern = false)
+	static void AddModification_InsertBefore(FString filePath, FString pattern, FString replacement, bool regex_pattern = false)
 	{
 		#if WITH_EDITOR
 				IModuleInterface* Module = FModuleManager::Get().GetModule("ModLoaderStorage");
 				FModLoaderStorageModule* storage_module = static_cast<FModLoaderStorageModule*>(Module);
-				storage_module->mods.Add(USModifications::modification{filePath, USModifications::modification_type::insert_before,pattern, replacement, !regex_pattern});
+				storage_module->mods.Add(USModifications::modification{filePath, USModifications::modification_type::insert_before,std::string(TCHAR_TO_UTF8(*pattern)), replacement, !regex_pattern});
 		#endif
 	}
 }
