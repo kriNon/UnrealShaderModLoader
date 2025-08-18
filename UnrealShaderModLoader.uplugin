@@ -17,12 +17,12 @@
 	"Modules": [
 		{
 			"Name": "UnrealShaderModLoader",
-			"Type": "Runtime",
+			"Type": "Editor",
 			"LoadingPhase": "PostConfigInit"
 		},
 		{
 			"Name": "ModLoaderStorage",
-			"Type": "Runtime",
+			"Type": "Editor",
 			"LoadingPhase": "EarliestPossible"
 		}
 	]
